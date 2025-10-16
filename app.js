@@ -8,8 +8,16 @@ import {
 
 import { getApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 
-// Get Firebase instances
-const app = getApp();
+// ✅ Make sure Firebase app is ready
+let app;
+try {
+  app = getApp();
+} catch {
+  // If not initialized yet, wait a bit
+  await new Promise(res => setTimeout(res, 500));
+  app = getApp();
+}
+
 const db = getFirestore(app);
 const storage = getStorage(app);
 
@@ -37,8 +45,8 @@ uploadBtn.addEventListener("click", async () => {
 
     // 2️⃣ Save message + imageURL to Firestore
     await addDoc(collection(db, "posts"), {
-      message: message,
-      imageURL: imageURL,
+      message,
+      imageURL,
       createdAt: new Date()
     });
 
@@ -50,7 +58,7 @@ uploadBtn.addEventListener("click", async () => {
     loadGallery();
   } catch (err) {
     console.error(err);
-    alert("Error uploading file.");
+    alert("Error uploading file: " + err.message);
   }
 });
 
