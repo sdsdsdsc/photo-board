@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alex Photo Board</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>📸 Alex’s Photo Board</h1>
+
+  <div id="uploadBox">
+    <input type="text" id="messageInput" placeholder="Type your message here..." />
+    <input type="file" id="fileInput" accept="image/*" />
+    <button id="uploadBtn">Upload</button>
+  </div>
+
+  <hr>
+
+  <h2>Uploaded Posts</h2>
+  <div id="gallery"></div>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    // Your Firebase config (replace this with YOURS)
+     const firebaseConfig = {
+    apiKey: "AIzaSyBSlzsjq26_yFu7Hi1x6j8R4Yt7uqpARDw",
+    authDomain: "alex-photo-board.firebaseapp.com",
+    projectId: "alex-photo-board",
+    storageBucket: "alex-photo-board.firebasestorage.app",
+    messagingSenderId: "1092938868533",
+    appId: "1:1092938868533:web:b7fd33a7eb0acd510d8e7c"
+  };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    // Import JS logic
+    import "./app.js";
+  </script>
+</body>
+</html>
