@@ -23,26 +23,24 @@
   <!-- Firebase SDKs -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
-    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
-    // Your Firebase config (replace this with YOURS)
-     const firebaseConfig = {
-    apiKey: "AIzaSyBSlzsjq26_yFu7Hi1x6j8R4Yt7uqpARDw",
-    authDomain: "alex-photo-board.firebaseapp.com",
-    projectId: "alex-photo-board",
-    storageBucket: "alex-photo-board.firebasestorage.app",
-    messagingSenderId: "1092938868533",
-    appId: "1:1092938868533:web:b7fd33a7eb0acd510d8e7c"
-  };
+    // ✅ Correct Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBSlzsjq26_yFu7Hi1x6j8R4Yt7uqpARDw",
+      authDomain: "alex-photo-board.firebaseapp.com",
+      projectId: "alex-photo-board",
+      storageBucket: "alex-photo-board.appspot.com",
+      messagingSenderId: "1092938868533",
+      appId: "1:1092938868533:web:b7fd33a7eb0acd510d8e7c"
+    };
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
-    // Import JS logic
-    import "./app.js";
+    // ✅ Initialize Firebase
+    window.firebaseApp = initializeApp(firebaseConfig);
   </script>
+
+  <!-- ✅ Load your app.js separately -->
+  <script type="module" src="app.js"></script>
 </body>
 </html>
