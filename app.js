@@ -71,9 +71,10 @@ async function loadGallery() {
     const item = document.createElement("div");
     item.classList.add("post");
     item.innerHTML = `
-      <img src="${data.imageURL}" alt="photo" />
-      <p>${data.message}</p>
-    `;
+  <img src="${data.imageURL}" alt="photo" onerror="this.style.display='none'" />
+  <p>${data.message}</p>
+  <a href="${data.imageURL}" target="_blank">🔗 View Image</a>
+`;
     gallery.appendChild(item);
   });
 }
