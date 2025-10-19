@@ -13,7 +13,7 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-// ====== 1) Firebase Init (USE YOUR REAL CONFIG) ======
+// ====== 1) Firebase Init (REAL CONFIG) ======
 const firebaseConfig = {
   apiKey: "AIzaSyBSlzsjq26_yFu7Hi1x6j8R4Yt7uqpARDw",
   authDomain: "alex-photo-board.firebaseapp.com",
@@ -49,7 +49,6 @@ function formatTimestamp(ts) {
     return "Unknown date";
   }
 }
-
 function el(html) {
   const tmp = document.createElement("div");
   tmp.innerHTML = html.trim();
@@ -63,10 +62,7 @@ async function handleUpload() {
     const name = (nameInput?.value || "").trim() || "Anonymous";
     const message = (msgInput?.value || "").trim();
 
-    if (!file) {
-      alert("Please choose an image first.");
-      return;
-    }
+    if (!file) { alert("Please choose an image first."); return; }
 
     const path = `uploads/${Date.now()}_${file.name}`;
     const ref = storageRef(storage, path);
@@ -78,7 +74,7 @@ async function handleUpload() {
       message,
       imageUrl: url,
       likes: 0,
-      timestamp: serverTimestamp()  // consistent Firestore Timestamp
+      timestamp: serverTimestamp()
     });
 
     if (fileInput) fileInput.value = "";
@@ -96,10 +92,7 @@ function startPhotosStream() {
   const q = query(collection(db, "photos"), orderBy("timestamp", "desc"));
   onSnapshot(q, (snap) => {
     gallery.innerHTML = "";
-    if (snap.empty) {
-      gallery.innerHTML = "<p>No photos yet.</p>";
-      return;
-    }
+    if (snap.empty) { gallery.innerHTML = "<p>No photos yet.</p>"; return; }
     snap.forEach((docSnap) => {
       const data = docSnap.data() || {};
       const imgUrl = data.imageUrl || "https://placehold.co/480x300?text=No+Image";
@@ -133,10 +126,7 @@ function startNewsStream() {
   const q = query(collection(db, "news"), orderBy("timestamp", "desc"));
   onSnapshot(q, (snap) => {
     newsContainer.innerHTML = "";
-    if (snap.empty) {
-      newsContainer.innerHTML = "<p>No news yet.</p>";
-      return;
-    }
+    if (snap.empty) { newsContainer.innerHTML = "<p>No news yet.</p>"; return; }
     snap.forEach((docSnap) => {
       const data = docSnap.data() || {};
       const title = data.title ?? "Untitled";
