@@ -1,157 +1,212 @@
-// ---------- script.js (ES Module) ----------
-// Firebase v10 modular SDK
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import {
-  getStorage, ref as storageRef, uploadBytes, getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getFirestore,
-  collection, addDoc,
-  query, orderBy,
-  onSnapshot,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+  collection,
+  addDoc,
+  getDocs,
+  serverTimestamp,
+  doc,
+  updateDoc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-// ====== 1) Firebase Init (REAL CONFIG) ======
 const firebaseConfig = {
   apiKey: "AIzaSyBSlzsjq26_yFu7Hi1x6j8R4Yt7uqpARDw",
   authDomain: "alex-photo-board.firebaseapp.com",
   projectId: "alex-photo-board",
   storageBucket: "alex-photo-board.appspot.com",
   messagingSenderId: "1092938868533",
-  appId: "1:1092938868533:web:7df0a0832310c2d30d8e7c"
+  appId: "1:1092938868533:web:7df0a0832310c2d30d8e7c",
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
-// ====== 2) DOM ======
-const fileInput     = document.getElementById("fileInput");
-const nameInput     = document.getElementById("userName");       // matches index.html
-const msgInput      = document.getElementById("messageInput");   // matches index.html
-const uploadBtn     = document.getElementById("uploadBtn");
-const gallery       = document.getElementById("gallery");
-const newsContainer = document.getElementById("newsContainer");
+// ========== PHOTO UPLOAD ==========
+const uploadBtn = document.getElementById("uploadBtn");
+const fileInput = document.getElementById("fileInput");
+const msgInput = document.getElementById("msgInput");
+const nameInput = document.getElementById("nameInput");
+const gallery = document.getElementById("gallery");
+const modal = document.getElementById("postModal");
+const modalBody = document.getElementById("modalBody");
+const closeBtn = document.querySelector(".close");
 
-// ====== 3) Helpers ======
-function formatTimestamp(ts) {
-  try {
-    if (!ts) return "Unknown date";
-    let d;
-    if (typeof ts.toDate === "function") d = ts.toDate();
-    else if (ts instanceof Date) d = ts;
-    else if (typeof ts === "string" || typeof ts === "number") d = new Date(ts);
-    else if (ts.seconds) d = new Date(ts.seconds * 1000);
-    else return "Unknown date";
-    return d.toLocaleString();
-  } catch {
-    return "Unknown date";
-  }
-}
-function el(html) {
-  const tmp = document.createElement("div");
-  tmp.innerHTML = html.trim();
-  return tmp.firstElementChild;
+async function uploadImage(file) {
+  const cloudName = "dburezmgp";
+  const uploadPreset = "unsigned_upload";
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", uploadPreset);
+  const res = await fetch(url, { method: "POST", body: formData });
+  const data = await res.json();
+  return data.secure_url;
 }
 
-// ====== 4) Upload Photo ======
-async function handleUpload() {
+uploadBtn.addEventListener("click", async () => {
+  const file = fileInput.files[0];
+  const name = nameInput.value.trim() || "Anonymous";
+  const msg = msgInput.value.trim();
+  if (!file || !msg) return alert("Please choose a file and write a message!");
+
   try {
-    const file = fileInput?.files?.[0];
-    const name = (nameInput?.value || "").trim() || "Anonymous";
-    const message = (msgInput?.value || "").trim();
-
-    if (!file) { alert("Please choose an image first."); return; }
-
-    const path = `uploads/${Date.now()}_${file.name}`;
-    const ref = storageRef(storage, path);
-    await uploadBytes(ref, file);
-    const url = await getDownloadURL(ref);
-
-    await addDoc(collection(db, "photos"), {
+    const imageUrl = await uploadImage(file);
+    await addDoc(collection(db, "posts"), {
       name,
-      message,
-      imageUrl: url,
+      message: msg,
+      imageUrl,
       likes: 0,
-      timestamp: serverTimestamp()
+      createdAt: serverTimestamp()
     });
-
-    if (fileInput) fileInput.value = "";
-    if (msgInput) msgInput.value = "";
+    fileInput.value = "";
+    msgInput.value = "";
+    nameInput.value = "";
+    alert("Uploaded!");
+    loadGallery();
   } catch (err) {
-    console.error("Upload failed:", err);
-    alert("Upload failed. Check the console for details.");
+    console.error("Upload error:", err);
+  }
+});
+
+async function loadGallery() {
+  gallery.innerHTML = "";
+  const snapshot = await getDocs(collection(db, "posts"));
+  for (const docSnap of snapshot.docs) {
+    const data = docSnap.data();
+    const postId = docSnap.id;
+    const item = document.createElement("div");
+    item.classList.add("item");
+
+    const img = document.createElement("img");
+    img.src = data.imageUrl;
+    img.alt = data.message;
+    const username = document.createElement("h4");
+    username.textContent = data.name || "Anonymous";
+    const caption = document.createElement("p");
+    caption.textContent = data.message || "";
+
+    const viewBtn = document.createElement("button");
+    viewBtn.textContent = "View Details";
+    viewBtn.classList.add("view-btn");
+    viewBtn.addEventListener("click", () => openModal(postId));
+
+    item.appendChild(img);
+    item.appendChild(username);
+    item.appendChild(caption);
+    item.appendChild(viewBtn);
+    gallery.appendChild(item);
   }
 }
-uploadBtn?.addEventListener("click", handleUpload);
 
-// ====== 5) Real-time Photos (newest first) ======
-function startPhotosStream() {
-  if (!gallery) return;
-  const q = query(collection(db, "photos"), orderBy("timestamp", "desc"));
-  onSnapshot(q, (snap) => {
-    gallery.innerHTML = "";
-    if (snap.empty) { gallery.innerHTML = "<p>No photos yet.</p>"; return; }
-    snap.forEach((docSnap) => {
-      const data = docSnap.data() || {};
-      const imgUrl = data.imageUrl || "https://placehold.co/480x300?text=No+Image";
-      const name = data.name ?? "Anonymous";
-      const message = data.message ?? "";
-      const dateStr = formatTimestamp(data.timestamp);
-      const likes = data.likes ?? 0;
+async function openModal(postId) {
+  modal.style.display = "block";
+  modalBody.innerHTML = "";
+  const postRef = doc(db, "posts", postId);
+  const postSnap = await getDoc(postRef);
+  const data = postSnap.data();
 
-      const card = el(`
-        <div class="photo-card">
-          <img src="${imgUrl}" alt="photo" />
-          <p><strong>${name}</strong></p>
-          <p>${message}</p>
-          <div class="photo-meta">
-            <small class="photo-date">🕒 ${dateStr}</small>
-            <button class="like-btn" disabled>❤️ ${likes}</button>
-          </div>
-        </div>
-      `);
-      gallery.appendChild(card);
+  const img = document.createElement("img");
+  img.src = data.imageUrl;
+  img.classList.add("modal-image");
+  const name = document.createElement("h3");
+  name.textContent = data.name;
+  const msg = document.createElement("p");
+  msg.textContent = data.message;
+
+  const time = document.createElement("p");
+  if (data.createdAt && data.createdAt.toDate) {
+    const date = data.createdAt.toDate();
+    time.textContent = `🕓 Posted on ${date.toLocaleString()}`;
+    time.classList.add("time");
+  }
+
+  const likeBtn = document.createElement("button");
+  likeBtn.textContent = `❤️ ${data.likes || 0}`;
+  likeBtn.classList.add("like-btn");
+  likeBtn.addEventListener("click", async () => {
+    const newLikes = (data.likes || 0) + 1;
+    await updateDoc(postRef, { likes: newLikes });
+    data.likes = newLikes;
+    likeBtn.textContent = `❤️ ${newLikes}`;
+  });
+
+  modalBody.appendChild(img);
+  modalBody.appendChild(name);
+  modalBody.appendChild(msg);
+  modalBody.appendChild(time);
+  modalBody.appendChild(likeBtn);
+}
+
+closeBtn.onclick = () => (modal.style.display = "none");
+window.onclick = e => { if (e.target === modal) modal.style.display = "none"; };
+
+// ========== NEWS ==========
+async function loadNews() {
+  const container = document.getElementById("newsContainer");
+  container.innerHTML = "";
+  const snapshot = await getDocs(collection(db, "news"));
+  snapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    const id = docSnap.id;
+    const item = document.createElement("div");
+    item.classList.add("news-card");
+
+    const title = document.createElement("h3");
+    title.textContent = data.title;
+    title.classList.add("news-title");
+    title.addEventListener("click", () => {
+      window.location.href = `article.html?id=${id}`;
     });
-  }, (err) => {
-    console.error("photos stream error:", err);
-    gallery.innerHTML = "<p>Error loading gallery. Check console.</p>";
+
+    const img = document.createElement("img");
+    img.src = data.imageUrl;
+    img.alt = data.title;
+    img.classList.add("news-thumb");
+
+    const time = document.createElement("p");
+    if (data.createdAt && data.createdAt.toDate) {
+      const date = data.createdAt.toDate();
+      time.textContent = `🕓 ${date.toLocaleString()}`;
+      time.classList.add("time");
+    }
+
+    const likeBtn = document.createElement("button");
+    likeBtn.textContent = `👍 ${data.likes || 0}`;
+    likeBtn.classList.add("like-btn");
+    likeBtn.addEventListener("click", async () => {
+      const postRef = doc(db, "news", id);
+      const newLikes = (data.likes || 0) + 1;
+      await updateDoc(postRef, { likes: newLikes });
+      data.likes = newLikes;
+      likeBtn.textContent = `👍 ${newLikes}`;
+    });
+
+    item.appendChild(title);
+    item.appendChild(img);
+    item.appendChild(time);
+    item.appendChild(likeBtn);
+    container.appendChild(item);
   });
 }
 
-// ====== 6) Real-time News (newest first) ======
-function startNewsStream() {
-  if (!newsContainer) return;
-  const q = query(collection(db, "news"), orderBy("timestamp", "desc"));
-  onSnapshot(q, (snap) => {
-    newsContainer.innerHTML = "";
-    if (snap.empty) { newsContainer.innerHTML = "<p>No news yet.</p>"; return; }
-    snap.forEach((docSnap) => {
-      const data = docSnap.data() || {};
-      const title = data.title ?? "Untitled";
-      const summary = data.summary ?? "";
-      const img = data.imageUrl ?? "https://placehold.co/600x300?text=No+Image";
-      const dateStr = formatTimestamp(data.timestamp);
+// ========== MENU ==========
+const photoMenu = document.getElementById("photoMenu");
+const newsMenu = document.getElementById("newsMenu");
+const photoSection = document.getElementById("photoSection");
+const newsSection = document.getElementById("newsSection");
 
-      const card = el(`
-        <div class="news-card">
-          <img src="${img}" alt="news" />
-          <h3><a href="article.html?id=${docSnap.id}" class="news-link">${title}</a></h3>
-          <p>${summary}</p>
-          <small>🕒 ${dateStr}</small>
-        </div>
-      `);
-      newsContainer.appendChild(card);
-    });
-  }, (err) => {
-    console.error("news stream error:", err);
-    newsContainer.innerHTML = "<p>Error loading news. Check console.</p>";
-  });
-}
-
-// ====== 7) Boot ======
-window.addEventListener("DOMContentLoaded", () => {
-  startPhotosStream();
-  startNewsStream();
+photoMenu.addEventListener("click", () => {
+  photoSection.style.display = "block";
+  newsSection.style.display = "none";
+  photoMenu.classList.add("active");
+  newsMenu.classList.remove("active");
 });
+newsMenu.addEventListener("click", () => {
+  photoSection.style.display = "none";
+  newsSection.style.display = "block";
+  newsMenu.classList.add("active");
+  photoMenu.classList.remove("active");
+  loadNews();
+});
+
+loadGallery();

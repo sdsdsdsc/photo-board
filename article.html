@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Article | Alex's Creative Space</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="article-container">
+    <button id="backBtn">⬅ Back to News</button>
+    <h1 id="article-title"></h1>
+    <img id="article-image" />
+    <p id="article-content"></p>
+    <p id="article-time"></p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBSlzsjq26_yFu7Hi1x6j8R4Yt7uqpARDw",
+      authDomain: "alex-photo-board.firebaseapp.com",
+      projectId: "alex-photo-board",
+      storageBucket: "alex-photo-board.appspot.com",
+      messagingSenderId: "1092938868533",
+      appId: "1:1092938868533:web:7df0a0832310c2d30d8e7c",
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const articleId = params.get("id");
+
+    async function loadArticle() {
+      const docRef = doc(db, "news", articleId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        document.getElementById("article-title").textContent = data.title;
+        document.getElementById("article-image").src = data.imageUrl;
+        document.getElementById("article-content").textContent = data.content;
+
+        if (data.createdAt && data.createdAt.toDate) {
+          const date = data.createdAt.toDate();
+          document.getElementById("article-time").textContent =
+            `🕓 Published on ${date.toLocaleString()}`;
+        }
+      } else {
+        document.getElementById("article-container").innerHTML = "<p>❌ Article not found.</p>";
+      }
+    }
+
+    loadArticle();
+    document.getElementById("backBtn").addEventListener("click", () => {
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>

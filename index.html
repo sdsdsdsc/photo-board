@@ -5,83 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Alex's Creative Space</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="data:,">
 </head>
-
 <body>
-  <!-- 🌿 Top Navigation Bar -->
-  <nav class="navbar">
-    <div class="logo">🌿 Alex's Creative Space</div>
+  <h1>🌿 Alex's Creative Space</h1>
 
-    <ul class="nav-links">
-      <li class="dropdown">
-        <a href="#">About ▾</a>
-        <ul class="dropdown-content">
-          <li><a href="#intro">Introduction</a></li>
-          <li><a href="#about-mission">Our Mission</a></li>
-        </ul>
-      </li>
-      <li class="dropdown">
-        <a href="#">Group ▾</a>
-        <ul class="dropdown-content">
-          <li><a href="#photosSection">Photos</a></li>
-          <li><a href="#newsSection">News</a></li>
-        </ul>
-      </li>
-      <li><a href="#events">Events</a></li>
-      <li><a href="#newsSection">News</a></li>
-    </ul>
-
-    <button class="contact-btn" onclick="window.location='mailto:alex.creativespace@example.com'">✉️ Contact Us</button>
+  <!-- ======= MENU ======= -->
+  <nav class="menu">
+    <button id="photoMenu" class="active">📸 Photos</button>
+    <button id="newsMenu">📰 News</button>
   </nav>
 
-  <!-- 🧭 Hero / Intro Section -->
-  <section id="intro" class="intro">
-    <h1>Welcome to Alex's Creative Space</h1>
-    <p>
-      A community-driven space for sharing creativity, photography, design,
-      and stories. Explore and connect with others through visuals and words.
-    </p>
-  </section>
-
-  <!-- 🧭 About -->
-  <section id="about-mission" class="content-section">
-    <h2>Our Mission</h2>
-    <p>
-      We believe in the power of creativity to connect communities and shape new ideas.
-      Our goal is to provide a collaborative environment for artists, designers, and dreamers.
-    </p>
-  </section>
-
-  <!-- 🖼️ Photos Section -->
-  <section id="photosSection" class="content-section">
-    <h2>Photo Gallery</h2>
-    <div class="upload-box">
+  <!-- ======= PHOTO SECTION ======= -->
+  <section id="photoSection">
+    <div class="upload-bar">
       <input type="file" id="fileInput" />
-      <input type="text" id="userName" placeholder="Your name" />
-      <input type="text" id="messageInput" placeholder="Leave a message" />
+      <input type="text" id="nameInput" placeholder="Your name" />
+      <input type="text" id="msgInput" placeholder="Leave a message" />
       <button id="uploadBtn">Upload</button>
     </div>
-    <div id="gallery" class="gallery"></div>
+    <h2>Gallery</h2>
+    <div id="gallery"></div>
   </section>
 
-  <!-- 📰 News Section -->
-  <section id="newsSection" class="content-section">
-    <h2>Latest News & Articles</h2>
-    <div id="newsContainer" class="news-container"></div>
+  <!-- ======= NEWS SECTION ======= -->
+  <section id="newsSection" style="display:none;">
+    <h2>News & Articles</h2>
+    <div id="newsContainer"></div>
   </section>
 
-  <!-- 🎟️ Events Placeholder -->
-  <section id="events" class="content-section">
-    <h2>Upcoming Events</h2>
-    <p>Stay tuned for creative gatherings and exhibitions near you!</p>
-  </section>
+  <!-- ======= MODAL (Photo Details) ======= -->
+  <div id="postModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div id="modalBody"></div>
+    </div>
+  </div>
 
-  <footer>
-    <p>© 2025 Alex's Creative Space | All rights reserved.</p>
-  </footer>
-
-  <!-- ✅ Firebase logic file -->
   <script type="module" src="script.js"></script>
 </body>
 </html>
