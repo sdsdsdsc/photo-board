@@ -1,5 +1,6 @@
 // ---------- script.js (ES Module) ----------
-// Keep your existing firebaseConfig object. If it isn't here, paste it below.
+// Firebase v10 modular SDK
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import {
   getStorage, ref as storageRef, uploadBytes, getDownloadURL
@@ -8,51 +9,41 @@ import {
   getFirestore,
   collection, addDoc,
   query, orderBy,
-  onSnapshot,           // real-time updates
-  serverTimestamp,      // consistent timestamps
-  getDocs               // used once for quick checks if needed
+  onSnapshot,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-// ====== 1) Firebase Init ======
-const firebaseConfig = window.firebaseConfig || {
-  // If you keep config in this file, fill these:
-  // apiKey: "YOUR_API_KEY",
-  // authDomain: "YOUR_AUTH_DOMAIN",
-  // projectId: "YOUR_PROJECT_ID",
-  // storageBucket: "YOUR_STORAGE_BUCKET",
-  // messagingSenderId: "YOUR_SENDER_ID",
-  // appId: "YOUR_APP_ID"
+// ====== 1) Firebase Init (USE YOUR REAL CONFIG) ======
+const firebaseConfig = {
+  apiKey: "AIzaSyBSlzsjq26_yFu7Hi1x6j8R4Yt7uqpARDw",
+  authDomain: "alex-photo-board.firebaseapp.com",
+  projectId: "alex-photo-board",
+  storageBucket: "alex-photo-board.appspot.com",
+  messagingSenderId: "1092938868533",
+  appId: "1:1092938868533:web:7df0a0832310c2d30d8e7c"
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
 // ====== 2) DOM ======
-const fileInput   = document.getElementById("fileInput");
-const nameInput   = document.getElementById("nameInput");
-const msgInput    = document.getElementById("msgInput");
-const uploadBtn   = document.getElementById("uploadBtn");
-const gallery     = document.getElementById("gallery");
+const fileInput     = document.getElementById("fileInput");
+const nameInput     = document.getElementById("userName");       // matches index.html
+const msgInput      = document.getElementById("messageInput");   // matches index.html
+const uploadBtn     = document.getElementById("uploadBtn");
+const gallery       = document.getElementById("gallery");
 const newsContainer = document.getElementById("newsContainer");
 
 // ====== 3) Helpers ======
 function formatTimestamp(ts) {
-  // Supports Firestore Timestamp, JS Date, ISO string, or missing
   try {
     if (!ts) return "Unknown date";
     let d;
-    if (typeof ts.toDate === "function") {
-      d = ts.toDate(); // Firestore Timestamp
-    } else if (ts instanceof Date) {
-      d = ts;
-    } else if (typeof ts === "string" || typeof ts === "number") {
-      d = new Date(ts);
-    } else if (ts.seconds) {
-      d = new Date(ts.seconds * 1000);
-    } else {
-      return "Unknown date";
-    }
-    // Local date & time, readable
+    if (typeof ts.toDate === "function") d = ts.toDate();
+    else if (ts instanceof Date) d = ts;
+    else if (typeof ts === "string" || typeof ts === "number") d = new Date(ts);
+    else if (ts.seconds) d = new Date(ts.seconds * 1000);
+    else return "Unknown date";
     return d.toLocaleString();
   } catch {
     return "Unknown date";
@@ -77,34 +68,26 @@ async function handleUpload() {
       return;
     }
 
-    // Upload to storage/uploads/...
     const path = `uploads/${Date.now()}_${file.name}`;
     const ref = storageRef(storage, path);
     await uploadBytes(ref, file);
     const url = await getDownloadURL(ref);
 
-    // Add to Firestore with consistent serverTimestamp
     await addDoc(collection(db, "photos"), {
       name,
       message,
       imageUrl: url,
       likes: 0,
-      timestamp: serverTimestamp()
+      timestamp: serverTimestamp()  // consistent Firestore Timestamp
     });
 
-    // Clear inputs
     if (fileInput) fileInput.value = "";
     if (msgInput) msgInput.value = "";
-
-    // UI gives a quick confirmation
-    uploadBtn?.classList.add("disabled");
-    setTimeout(() => uploadBtn?.classList.remove("disabled"), 600);
   } catch (err) {
     console.error("Upload failed:", err);
     alert("Upload failed. Check the console for details.");
   }
 }
-
 uploadBtn?.addEventListener("click", handleUpload);
 
 // ====== 5) Real-time Photos (newest first) ======
